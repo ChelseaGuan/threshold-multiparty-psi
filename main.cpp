@@ -1,75 +1,55 @@
 #include <iostream>
 #include <vector>
+#include <future>
+#include <fstream>
+#include <nlohmann/json.hpp>  // Include JSON library
 #include "psi_protocols.h"
-#include "benchmarking.h"
-// #include "NTL/BasicThreadPool.h"
 
+using json = nlohmann::json;  // For convenience
 
-// TODO: Allow variable set sizes?
 int main() {
-    // SetNumThreads(8);
-
     Keys keys;
     key_gen(&keys, 1024, 2, 3);
 
     std::vector<long> client1_set({1, 3, 5, 7});
     std::vector<long> client2_set({2, 3, 4, 5});
-    std::vector<long> server_set({6, 5, 2, 1});
+    std::vector<long> server_set({1, 2, 5, 6});
 
-    std::cout << "Computing the set intersection between multiple parties using a (2, 3)-encryption of 1024 bits."
-              << std::endl;
+    std::vector<std::vector<long>> all_sets = {client1_set, client2_set, server_set};
+    std::vector<std::future<std::vector<long>>> futures;
 
-    auto start = std::chrono::high_resolution_clock::now();
-    std::vector<long> result = multiparty_psi(std::vector({client1_set, client2_set}), server_set,
-                                              2,
-                                              16, 4,
-                                              keys);
-    auto stop = std::chrono::high_resolution_clock::now();
-
-    std::cout << "The resulting set intersection was: { ";
-    for (long element : result) {
-        std::cout << element << " ";
-    }
-    std::cout << "}." << std::endl;
-    std::cout << "Took: " << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << " ms."
-        << std::endl << std::endl;
-
-
-    std::cout << "Computing the threshold set intersection between multiple parties using a (2, 3)-encryption of 1024 bits."
-              << std::endl;
-
-    start = std::chrono::high_resolution_clock::now();
-    result = threshold_multiparty_psi(std::vector({client1_set, client2_set}), server_set,
-                                                            2,
-                                                            16, 4,
-                                                            1,
-                                                            keys);
-    stop = std::chrono::high_resolution_clock::now();
-
-
-    std::cout << "The resulting threshold set intersection was: { ";
-    for (long element : result) {
-        std::cout << element << " ";
-    }
-    std::cout << "}." << std::endl << std::endl;
-    std::cout << "Took: " << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << " ms."
-              << std::endl << std::endl;
-
-    std::cout << "Run benchmarks for MPSI (y/n): ";
-
-    if (std::cin.get() == 'y') {
-        std::cout << "Running benchmarks (without simulated delays) using a 1024-bit key:" << std::endl;
-        benchmark(std::vector<long>({10, 20, 30, 40, 50, 60, 70, 80, 90, 100}), std::vector<long>({4, 6, 7}));
+    for (int i = 0; i < all_sets.size(); ++i) {
+        futures.push_back(std::async(std::launch::async, [&, i]() {
+            std::vector<std::vector<long>> client_sets;
+            for (int j = 0; j < all_sets.size(); ++j) {
+                if (j != i) {
+                    client_sets.push_back(all_sets[j]);
+                }
+            }
+            return threshold_multiparty_psi(client_sets, all_sets[i], 2, 16, 4, 1, keys);
+        }));
     }
 
-    std::cin.ignore( std::numeric_limits<std::streamsize>::max(), '\n');
-
-    std::cout << "Run benchmarks for T-MPSI (y/n): ";
-
-    if (std::cin.get() == 'y') {
-        std::cout << "Running benchmarks (without simulated delays) using a 1024-bit key:" << std::endl;
-        threshold_benchmark(std::vector<long>({5, 15, 25, 35}), std::vector<long>({2, 4, 5}));
+    std::vector<std::vector<long>> results;
+    for (auto& fut : futures) {
+        results.push_back(fut.get());
     }
+
+    // Create a JSON object
+    json j;
+    j["results"] = json::array();  // Create a JSON array to store results
+
+    for (int i = 0; i < results.size(); ++i) {
+        j["results"].push_back(results[i]);  // Store each result in the JSON array
+    }
+
+    // Output JSON to the console
+    std::cout << j.dump(4) << std::endl;  // Pretty print with a 4-space indent
+
+    // Optionally, write JSON to a file
+    std::ofstream file("output.json");
+    file << j.dump(4);  // Pretty print to file
+    file.close();
 
     return 0;
 }

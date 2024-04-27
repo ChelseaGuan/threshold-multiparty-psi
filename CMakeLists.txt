@@ -10,6 +10,16 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -pthread")
 find_package(GMP REQUIRED)
 find_package(NTL REQUIRED)
 
+include(FetchContent)
+
+FetchContent_Declare(
+        nlohmann_json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG v3.10.2  # Specify the version you want to use
+)
+
+FetchContent_MakeAvailable(nlohmann_json)
+
 # Libraries
 add_library(MurmurHash3 MurmurHash3.h MurmurHash3.cpp)
 add_library(ThresholdPaillier threshold_paillier.h threshold_paillier.cpp)
@@ -29,4 +39,6 @@ target_link_libraries(multiparty_psi_fresh
         MurmurHash3
         ThresholdPaillier
         ${NTL_LIBRARY}
-        ${GMP_LIBRARIES})
+        ${GMP_LIBRARIES}
+        nlohmann_json::nlohmann_json
+)

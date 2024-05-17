@@ -53,7 +53,7 @@ void benchmark(std::vector<long> parties_t, std::vector<long> set_size_exponents
         for (long exp : set_size_exponents) {
             // Generate sets for each experiment
             std::vector<std::vector<std::vector<long>>> experiment_sets;
-            for (int i = 0; i < 10; ++i) {
+            for (int i = 0; i < 2/*10*/; ++i) {
                 std::vector<std::vector<long>> client_sets;
                 // Generate a set for each client
                 for (int j = 0; j < parties_t.at(t_i); ++j) {
@@ -81,7 +81,7 @@ void benchmark(std::vector<long> parties_t, std::vector<long> set_size_exponents
             // threshold l = t / 2
             std::vector<long> times;
 
-            for (int i = 0; i < 10; ++i) {
+            for (int i = 0; i < 2/*10*/; ++i) {
                 auto start = std::chrono::high_resolution_clock::now();
                 multiparty_psi(experiment_sets.at(i), parties_t.at(t_i) / 2, m_bits, k_hashes, keys.at(t_i).first);
                 auto stop = std::chrono::high_resolution_clock::now();
@@ -127,7 +127,6 @@ void threshold_benchmark(std::vector<long> parties_t, std::vector<long> set_size
         keys.emplace_back(k_1, k_tm1);
     }
     // -> Normally, the keys would be distributed to the parties now
-
     // Run the experiments
     for (int t_i = 0; t_i < parties_t.size(); ++t_i) {
         std::cout << "time_" << parties_t.at(t_i) << "_parties = process([";
@@ -169,7 +168,7 @@ void threshold_benchmark(std::vector<long> parties_t, std::vector<long> set_size
                                          experiment_sets.at(0).size() / 2, keys.at(t_i).first);
                 auto stop = std::chrono::high_resolution_clock::now();
 
-                times.push_back((stop-start).count());
+                times.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
             }
 
             double mean = sample_mean(times);
@@ -184,7 +183,7 @@ void threshold_benchmark(std::vector<long> parties_t, std::vector<long> set_size
                                          experiment_sets.at(0).size() / 2, keys.at(t_i).second);
                 auto stop = std::chrono::high_resolution_clock::now();
 
-                times.push_back((stop-start).count());
+                times.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
             }
 
             mean = sample_mean(times);

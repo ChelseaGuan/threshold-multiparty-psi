@@ -249,6 +249,7 @@ std::vector<long> threshold_multiparty_psi(std::vector<std::vector<long>> client
     // 1-3. Clients compute their Bloom filter, invert it and encrypt it (generating EIBFs)
     std::vector<std::vector<ZZ>> client_ebfs;
     client_ebfs.reserve(client_sets.size());
+    #pragma omp parallel for
     for (std::vector<long> client_set : client_sets) {
         BloomFilter bloom_filter(m_bits, k_hashes);
 
@@ -260,7 +261,7 @@ std::vector<long> threshold_multiparty_psi(std::vector<std::vector<long>> client
         // Step 2
         std::vector<ZZ> eibf;
         bloom_filter.encrypt_all(eibf, keys.public_key);
-
+        #pragma omp critical
         client_ebfs.push_back(eibf);
     }
 
@@ -273,6 +274,7 @@ std::vector<long> threshold_multiparty_psi(std::vector<std::vector<long>> client
     //      rerandomize afterwards.
     std::vector<std::vector<ZZ>> client_ciphertexts;
     client_ciphertexts.reserve(client_sets.size());
+    #pragma omp parallel for
     for (int i = 0; i < client_sets.size(); ++i) {
         // Initialize an empty set for each client
         client_ciphertexts.emplace_back();
@@ -309,6 +311,7 @@ std::vector<long> threshold_multiparty_psi(std::vector<std::vector<long>> client
     // 4-6. For each ciphertext, compute a fresh encryption of k and run a Secure Comparison Protocol with it
     std::vector<std::vector<ZZ>> client_comparisons;
     client_comparisons.reserve(client_ciphertexts.size());
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < client_ciphertexts.size(); ++i) {
         std::vector<ZZ> comparisons;
         comparisons.reserve(client_ciphertexts.at(i).size());
@@ -318,7 +321,7 @@ std::vector<long> threshold_multiparty_psi(std::vector<std::vector<long>> client
                                                         client_ciphertexts.at(i).at(j),
                                                         threshold_l, ZZ(128), keys));
         }
-
+        #pragma omp critical
         client_comparisons.push_back(comparisons);
     }
 
@@ -341,6 +344,7 @@ std::vector<long> threshold_multiparty_psi(std::vector<std::vector<long>> client
     // 8-9. Run SCP to compare each summed_comparison with a fresh encryption of intersection_threshold_T and rerandomize again
     std::vector<ZZ> element_ciphertexts;
     element_ciphertexts.reserve(summed_comparisons.size());
+    #pragma omp parallel for
     for (auto & summed_comparison : summed_comparisons) {
         std::vector<std::pair<long, ZZ>> yeet;
         yeet.reserve(threshold_l + 1);
@@ -348,7 +352,7 @@ std::vector<long> threshold_multiparty_psi(std::vector<std::vector<long>> client
             yeet.emplace_back(i + 1, partial_decrypt(summed_comparison, keys.public_key,
                                                                   keys.private_keys.at(i)));
         }
-
+        #pragma omp critical
         element_ciphertexts.push_back(rerandomize(
                                  multiparty_comparison(encrypt(ZZ(intersection_threshold_T), keys.public_key),
                                                        summed_comparison,
@@ -359,6 +363,7 @@ std::vector<long> threshold_multiparty_psi(std::vector<std::vector<long>> client
     // 10-11. Collaboratively decrypt each ciphertext and run the combining algorithm
     std::vector<ZZ> decryptions;
     decryptions.reserve(element_ciphertexts.size());
+    #pragma omp parallel for
     for (ZZ ciphertext : element_ciphertexts) {
         // Partial decryption (let threshold + 1 parties decrypt)
         std::vector<std::pair<long, ZZ>> decryption_shares;
@@ -367,7 +372,7 @@ std::vector<long> threshold_multiparty_psi(std::vector<std::vector<long>> client
             decryption_shares.emplace_back(i + 1, partial_decrypt(ciphertext, keys.public_key,
                                                                   keys.private_keys.at(i)));
         }
-
+        #pragma omp critical
         // Combining algorithm
         decryptions.push_back(combine_partial_decrypt(decryption_shares,
                                                       keys.public_key));

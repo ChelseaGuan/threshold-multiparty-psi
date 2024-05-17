@@ -1,39 +1,67 @@
+#include <chrono>
 #include <iostream>
 #include <vector>
 #include <future>
 #include <fstream>
+#include <filesystem>
+#include <sstream>
 #include <nlohmann/json.hpp>  // Include JSON library
 #include "psi_protocols.h"
 
-using json = nlohmann::json;  // For convenience
+using json = nlohmann::json;
+
+namespace fs = std::filesystem;
+
+std::vector<std::vector<long>> read_directory_and_format(const std::string& directory_path) {
+    std::vector<std::vector<long>> sets;
+
+    // Iterate through all the files in the directory
+    for (const auto& entry : fs::directory_iterator(directory_path)) {
+        std::vector<long> current_set;
+        std::ifstream file(entry.path()); // Open the file
+        std::string line;
+
+        // Read each line in the file into a vector (one number per line)
+        while (std::getline(file, line)) {
+            std::stringstream ss(line);
+            long number;
+            if (ss >> number) {
+                current_set.push_back(number);
+            }
+        }
+
+        file.close();
+        sets.push_back(current_set);
+    }
+
+    return sets;
+}
 
 int main() {
+    auto begin = std::chrono::high_resolution_clock::now();
+
     Keys keys;
     key_gen(&keys, 1024, 2, 3);
 
-    std::vector<long> client1_set({1, 3, 5, 7});
-    std::vector<long> client2_set({2, 3, 4, 5});
-    std::vector<long> server_set({1, 2, 5, 6});
+    std::vector<std::vector<long>> all_sets = read_directory_and_format("../elements");
 
-    std::vector<std::vector<long>> all_sets = {client1_set, client2_set, server_set};
-    std::vector<std::future<std::vector<long>>> futures;
 
+
+
+    std::vector<std::vector<long>> results(all_sets.size());
+
+    #pragma omp parallel for
     for (int i = 0; i < all_sets.size(); ++i) {
-        futures.push_back(std::async(std::launch::async, [&, i]() {
-            std::vector<std::vector<long>> client_sets;
-            for (int j = 0; j < all_sets.size(); ++j) {
-                if (j != i) {
-                    client_sets.push_back(all_sets[j]);
-                }
+        std::vector<std::vector<long>> client_sets;
+        for (int j = 0; j < all_sets.size(); ++j) {
+            if (j != i) {
+                client_sets.push_back(all_sets[j]);
             }
-            return threshold_multiparty_psi(client_sets, all_sets[i], 2, 16, 4, 1, keys);
-        }));
+        }
+        results[i] = threshold_multiparty_psi(client_sets, all_sets[i], 2, 16, 4, 1, keys);
     }
 
-    std::vector<std::vector<long>> results;
-    for (auto& fut : futures) {
-        results.push_back(fut.get());
-    }
+
 
     // Create a JSON object
     json j;
@@ -42,14 +70,16 @@ int main() {
     for (int i = 0; i < results.size(); ++i) {
         j["results"].push_back(results[i]);  // Store each result in the JSON array
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto dur = end - begin;
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+    std::cout << "\tTotal time: " << ms << " miliseconds" << std::endl;
 
-    // Output JSON to the console
-    std::cout << j.dump(4) << std::endl;  // Pretty print with a 4-space indent
-
-    // Optionally, write JSON to a file
-    std::ofstream file("output.json");
+    // Write output to a JSON file
+    std::ofstream file("tmpsi_ind.json");
     file << j.dump(4);  // Pretty print to file
     file.close();
+
 
     return 0;
 }

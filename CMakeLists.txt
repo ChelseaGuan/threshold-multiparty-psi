@@ -9,6 +9,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -pthread")
 # Load dependencies
 find_package(GMP REQUIRED)
 find_package(NTL REQUIRED)
+find_package(OpenMP REQUIRED)
 
 include(FetchContent)
 
@@ -41,4 +42,5 @@ target_link_libraries(multiparty_psi_fresh
         ${NTL_LIBRARY}
         ${GMP_LIBRARIES}
         nlohmann_json::nlohmann_json
+        OpenMP::OpenMP_CXX
 )

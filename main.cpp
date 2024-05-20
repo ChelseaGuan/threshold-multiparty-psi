@@ -45,9 +45,6 @@ int main() {
 
     std::vector<std::vector<long>> all_sets = read_directory_and_format("../elements");
 
-
-
-
     std::vector<std::vector<long>> results(all_sets.size());
 
     #pragma omp parallel for
@@ -61,8 +58,6 @@ int main() {
         results[i] = threshold_multiparty_psi(client_sets, all_sets[i], 2, 16, 4, 1, keys);
     }
 
-
-
     // Create a JSON object
     json j;
     j["results"] = json::array();  // Create a JSON array to store results
@@ -73,13 +68,26 @@ int main() {
     auto end = std::chrono::high_resolution_clock::now();
     auto dur = end - begin;
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-    std::cout << "\tTotal time: " << ms << " miliseconds" << std::endl;
+    std::cout << "\tTotal time: " << ms << " milliseconds" << std::endl;
 
     // Write output to a JSON file
     std::ofstream file("tmpsi_ind.json");
     file << j.dump(4);  // Pretty print to file
     file.close();
 
-
     return 0;
 }
+
+
+//#include <iostream>
+//#include <vector>
+//#include "psi_protocols.h"
+//#include "benchmarking.h"
+//// #include "NTL/BasicThreadPool.h"
+//
+//
+//int main() {
+//    std::cout << "Running benchmarks for T-MPSI (without simulated delays) using a 1024-bit key:" << std::endl;
+//    threshold_benchmark(std::vector<long>({5, 7, 9}), std::vector<long>({5, 7}));
+//    return 0;
+//}

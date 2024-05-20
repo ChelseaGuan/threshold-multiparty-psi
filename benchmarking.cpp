@@ -135,7 +135,7 @@ void threshold_benchmark(std::vector<long> parties_t, std::vector<long> set_size
         for (long exp : set_size_exponents) {
             // Generate sets for each experiment
             std::vector<std::vector<std::vector<long>>> experiment_sets;
-            for (int i = 0; i < 10; ++i) {
+            for (int i = 0; i < 2/*10*/; ++i) {
                 std::vector<std::vector<long>> client_sets;
                 // Generate a set for each client
                 for (int j = 0; j < parties_t.at(t_i); ++j) {
@@ -163,13 +163,13 @@ void threshold_benchmark(std::vector<long> parties_t, std::vector<long> set_size
             // threshold l = t / 2
             std::vector<long> times;
 
-            for (int i = 0; i < 10; ++i) {
+            for (int i = 0; i < 2/*10*/; ++i) {
                 auto start = std::chrono::high_resolution_clock::now();
                 threshold_multiparty_psi(experiment_sets.at(i), parties_t.at(t_i) / 2, m_bits, k_hashes,
                                          experiment_sets.at(0).size() / 2, keys.at(t_i).first);
                 auto stop = std::chrono::high_resolution_clock::now();
 
-                times.push_back((stop-start).count());
+                times.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
             }
 
             double mean = sample_mean(times);
@@ -178,13 +178,13 @@ void threshold_benchmark(std::vector<long> parties_t, std::vector<long> set_size
 
             // threshold l = t - 1
 
-            for (int i = 0; i < 10; ++i) {
+            for (int i = 0; i < 2/*10*/; ++i) {
                 auto start = std::chrono::high_resolution_clock::now();
                 threshold_multiparty_psi(experiment_sets.at(i), parties_t.at(t_i) - 1, m_bits, k_hashes,
                                          experiment_sets.at(0).size() / 2, keys.at(t_i).second);
                 auto stop = std::chrono::high_resolution_clock::now();
 
-                times.push_back((stop-start).count());
+                times.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
             }
 
             mean = sample_mean(times);

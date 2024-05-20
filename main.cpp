@@ -85,7 +85,7 @@ int main() {
             std::vector<std::vector<long>> results(all_sets.size());
 
 
-#pragma omp parallel for
+            #pragma omp parallel for
             for (int i = 0; i < all_sets.size(); ++i) {
                 std::vector<std::vector<long>> client_sets;
                 for (int j = 0; j < all_sets.size(); ++j) {
@@ -95,7 +95,6 @@ int main() {
                 }
                 results[i] = threshold_multiparty_psi(client_sets, all_sets[i], l, m_bits, k_hashes, T, keys);
             }
-
 
             auto end = std::chrono::high_resolution_clock::now();
             auto dur = end - begin;

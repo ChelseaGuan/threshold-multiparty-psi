@@ -98,12 +98,12 @@ int main() {
             auto dur = end - begin;
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
 
-            std::string fileName = "Bay_benchmark_" + std::to_string(m) + "_" + std::to_string(lround(std::pow(2, exp))) + "_" + std::to_string(T) + ".txt";
+            std::string fileName = "Bay_Original_benchmark_" + std::to_string(m) + "_" + std::to_string(lround(std::pow(2, exp))) + "_" + std::to_string(T) + ".txt";
             std::ofstream file(fileName, std::ios::app);
 
             // Check if file is open
             if (file.is_open()) {
-                file << "\nBay: Total time: " << ms << " milliseconds\n\nResults: " << std::endl;
+                file << "\nBay Original Total Time: " << ms << " ms\n\nResults: " << std::endl;
                 for (int i = 0; i < results.size(); ++i) {
                     file << i << ":\t";
                     for (int j = 0; j < results[i].size(); ++j) {

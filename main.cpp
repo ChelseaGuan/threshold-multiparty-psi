@@ -101,11 +101,11 @@ int main() {
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
 
             std::string fileName = "Bay_parallelized_benchmark_" + std::to_string(m) + "_" + std::to_string(lround(std::pow(2, exp))) + "_" + std::to_string(T) + ".txt";
-            std::ofstream file(fileName);
+            std::ofstream file(fileName, std::ios::app);
 
             // Check if file is open
             if (file.is_open()) {
-                file << "Bay parallelized: Total time: " << ms << " milliseconds\n\nResults: " << std::endl;
+                file << "\nBay parallelized: Total time: " << ms << " milliseconds\n\nResults: " << std::endl;
                 for (int i = 0; i < results.size(); ++i) {
                     file << i << ":\t";
                     for (int j = 0; j < results[i].size(); ++j) {

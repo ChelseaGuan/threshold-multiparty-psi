@@ -103,7 +103,8 @@ int main() {
 
             // Check if file is open
             if (file.is_open()) {
-                file << "\nBay Original Total Time: " << ms << " ms\n\nResults: " << std::endl;
+                file << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Bay <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n";
+                file << "Total Time: " << ms << " ms\n\nResults: " << std::endl;
                 for (int i = 0; i < results.size(); ++i) {
                     file << i << ":\t";
                     for (int j = 0; j < results[i].size(); ++j) {

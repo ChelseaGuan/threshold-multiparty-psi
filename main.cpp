@@ -50,7 +50,7 @@ int main() {
             std::string dirName = entry.path().filename().string();
             std::string mahdaviBenchmark = entry.path().filename().string();
             // Split the directory name by underscores
-            std::string parts[5]; // to store each part of the directory name
+            std::string parts[3]; // to store each part of the directory name
             int i = 0;
             size_t pos = 0;
             std::string token;
@@ -64,7 +64,7 @@ int main() {
             // Assign variables based on the parts
             int m = std::stoi(parts[1]); // number of parties m
             int l = (m-1) / 2;  // HE threshold l
-            int T = std::stoi(parts[3]); // intersection threshold T
+            int T = std::stoi(dirName); // intersection threshold T
             long exp = std::log2(std::stoi(parts[2])); // log_2 of set size
 
             // Output to verify
